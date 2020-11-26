@@ -89,16 +89,3 @@ def preprocess(review):
 #                                 :
 # reviewn:          [0,     0   ,  0  , ... ,  1 ] [ 4  ]
 # review2 :         [1,     0   ,   1,  ... ,  0 ] [  1 ]
-
-
-import vectorization
-import sklearn
-from sklearn.feature_extraction.text import CountVectorizer;
-from sklearn.feature_extraction.text import TfidfVectorizer;
-import preprocessing
-import pandas as pd
-
-def binarizeRating(rating):
-    if rating >=3.5:
-        return 1;
-    return 0;
