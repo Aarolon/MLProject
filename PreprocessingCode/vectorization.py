@@ -12,6 +12,7 @@ def ListToString(df, col):
 
 def vectorize(vectorizer, vocabulary, list):
     v =vectorizer(stop_words='english')
+    print(vocabulary)
     v.fit(vocabulary)
     sparse_vector = v.transform(list)
     return v, sparse_vector

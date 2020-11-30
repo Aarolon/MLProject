@@ -7,26 +7,65 @@ import json
 import pandas as pd
 import re
 from nltk.stem import WordNetLemmatizer
-
+import math
+count = 0
+# sys.stdout.write("Download progress: %d%%   \r" % (progress) )
+# sys.stdout.flush()
 stopwords = nltk.corpus.stopwords.words('english')
 nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner']);
 
+def getNaNs(df):
+    c = 0
+    for d in df['reviewText']:
+        c = c+1;
+        if(type(d) == float):
+            print(c)
+
+# df =pd.read_csv('All_Beauty.csv')
+# df = df[:1000]
+# getNaNs(df)
+# isNaN(df['reviewText'][547])
+# df
+# filteredDf= df[df['reviewText'].apply(isNotNaN)]
+# len(filteredDf)
+# math.isnan(df['reviewText'][547])
+
 def filterOutNonString(df, column):
     words_only = df[column];
-    print(len(words_only))
+    # print(len(words_only))
     bin = [type(words)==str for words in words_only]
     not_words = [i for i, x in enumerate(bin) if x == False]
     for indx in not_words:
         df = df.drop([indx])
     return df
 
+def isNotNaN(review_text):
+    try:
+        return not math.isnan(review_text);
+    except(TypeError):
+        return True
+
 def getDfFromJSON(path):
+    print("Getting data from JSON")
     data = []
+    count = 0
     with gzip.open(path) as f:
         for l in f:
-            data.append(json.loads(l.strip()))
+            doc = json.loads(l.strip())
+            sys.stdout.write("Reviews processed: %d   \r" % (count) )
+            sys.stdout.flush()
+            count = count + 1
+            data.append(doc)
+            # data.append(json.loads(l.strip()))
+    sys.stdout.write("Reviews processed: %d   " % (count) )
+    sys.stdout.flush()
+    print("Generating df...")
     df = pd.DataFrame.from_dict(data);
+    print("adding Column Names to DF")
     df = df[['overall', 'reviewText','summary']];
+    print("Unfiltered df", len(df))
+    df = df[df['reviewText'].apply(isNotNaN)]
+    print("Returning Filtered df", len(df))
     return df
 
 def tokenize(review):
@@ -54,32 +93,35 @@ def lemmatizer(word):
     return nlp(word)[0].lemma_
 
 def preprocessForSentimentAnalsis(review,stop_words,lemmatizer):
-    print("    Input String       : ",review)
+    # print("    Input String       : ",review)
     words = tokenize(review);
     stop_words  = lowerCaseList(stop_words);
     input_words = lowerCaseList(words)
-    print("    Tokenized string   : ",input_words)
+    # print("    Tokenized string   : ",input_words)
     stoplessWords = removeStopWords(input_words, stop_words);
-    print("    Stopless Words     : ",stoplessWords)
+    # print("    Stopless Words     : ",stoplessWords)
     lemmatizedWords = lemmatizeList(stoplessWords, lemmatizer)
-    print("    Lemmatized Words   : ",lemmatizedWords)
+    # print("    Lemmatized Words   : ",lemmatizedWords)
     return lemmatizedWords
 
-def preprocessDocumentList(document_array,stop_words,lemmatizer):
+def preprocessDocumentList(document_array,stop_words=stopwords,lemmatizer=lemmatizer):
     return [preprocessForSentimentAnalsys(document, stopwords, lemmatizer) for document in document_list]
 
 def preprocess(review):
     try:
         return preprocessForSentimentAnalsis(review, stopwords, lemmatizer);
     except(TypeError):
-        print(type(review))
-        return False
+        print("This is an error")
+        print(type(review),review)
+        return "  "
 
 
 # print("Cleaning Negative String...");
 # preprocess("This product had a very rough start!");
 # print("Cleaning Positive String...");
 # preprocess("I immediately knew I was going to enjoy this!");
+
+
 
 #                                 Feature            Labels
 # allWords        = ['w1', 'w2' , 'w3',  ... ,'wn'] [ 5  ]
