@@ -46,9 +46,6 @@ from keras.layers import Dense
 from keras.layers import Dropout
 from sklearn.preprocessing import normalize
 
-xTrain
-# ytrain=ytrain/5.0
-# ytest = ytest/5.0
 
 modelAmazon = Sequential()
 modelAmazon.add(Dense(50, activation = "relu", input_shape=(8250, )))
@@ -106,38 +103,6 @@ test_y = targets[:10000]
 train_x = data[10000:]
 train_y = targets[10000:]
 
-print(test_y)
-print(type(test_y))
-print(type(test_y[0]))
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import Dropout
-
-model = Sequential()
-model.add(Dense(50, activation = "relu", input_shape=(10000, )))
-# Hidden - Layers
-model.add(Dropout(0.3, noise_shape=None, seed=None))
-model.add(Dense(50, activation = "relu"))
-model.add(Dropout(0.3, noise_shape=None, seed=None))
-model.add(Dense(50, activation = "relu"))
-# Output- Layer
-model.add(Dense(1, activation = "sigmoid"))
-model.summary()
-
-model.compile(
- optimizer = "adam",
- loss = "binary_crossentropy",
- metrics = ["accuracy"]
-)
-
-results = model.fit(
- train_x, train_y,
- epochs= 5,
- batch_size = 500,
- validation_data = (test_x, test_y)
-)
-
-print(np.mean(results.history["accuracy"]))
 
 def runOnSample(input):
     prepped = preprocessing.preprocessForSentimentAnalsis(input,preprocessing.stopwords,preprocessing.lemmatizer)
@@ -145,7 +110,7 @@ def runOnSample(input):
     prepped= " ".join(prepped)
     print(prepped)
     sparce_inputs = v.transform([prepped]).toarray()
-    return modelAmazon.predict(sparce_inputs)
+    return modelAmazon.predict(sparce_inputs)[0][0]
 
 
 
@@ -162,54 +127,6 @@ def getSentimentOfTopic(topic, nTweets):
     return  pd.DataFrame(data= {"Tweets" : tweets,"Trained Words":actual_words,"Output" : output})
 
 
-def getActuallyUsedWords(phrase):
-    out = []
-    for word in phrase:
-        if max(v.transform([word]).toarray()[0]) !=0:
-            out = out+ [word]
-    return out;
-
-getActuallyUsedWords(["real", "notarealword"])
-
-
-donald_df = getSentimentOfTopic("donald trump",20);
-d = {'col1': [1, 2], 'col2': [3, 4]}
-df = pd.DataFrame(data=d)
-df
-
-wap, wap_actual_words, wap_analysis = getSentimentOfTopic("wap", 20)
-wap_analysis
-
-
-happy_tweets, used, nnout = getSentimentOfTopic("happy",20)
-
-import tkinter as tk
-
-# root = tk.Tk()
-#
-# canvas1 = tk.Canvas(root, width=800, height=800)
-# canvas1.pack()
-#
-# entry1 = tk.Entry(root).pack(side="left")
-#
-#
-# class Table:
-#     def __init__(self,root,df):
-#         # code for creating table
-#
-#                 canvas1.create_window(300+(j*80),300+(i*10), window=self.e)
-#
-# def getSemanticsAnalysis():
-#     topic = entry1.get()
-#     df = getSentimentOfTopic(topic,15)
-#     score = np.array(list(df['Output'])).mean()
-#     label1 = tk.Label(root, text=score)
-#     canvas1.create_window(200, 230, window=label1)
-#
-#
-# button1 = tk.Button(text='Analyze Semantics of Entry', command=getSemanticsAnalysis).pack(side="left")
-# root.mainloop()
-
 def sentimentCalculation(norm):
     if norm<.2:
         return "Very Negative"
@@ -224,46 +141,39 @@ def sentimentCalculation(norm):
     if norm<1:
         return "Positive"
 
-
-class Table:
-    def __init__(self,f,df):
-        # code for creating table
-        for i in range(0,len(df)):
-            for j in range(0, len(df.keys())):
-                self.e = tk.Label(f,text = df[df.keys()[j]][i],pady=3,
-                            font=('Arial',6,'bold'))
-                self.e.grid(row=i, column=j)
-        score = np.array(list(df['Output'])).mean()
-        footer =tk.Label(f,text=  "Results: ")
-        footer.grid(row =len(df), column = 0)
-        score_label=tk.Label(f,text= str(score))
-        score_label.grid(row =len(df), column = 1)
-        sentiment=tk.Label(f,text= sentimentCalculation(score))
-        sentiment.grid(row =len(df), column = 2)
+def getSemanticsAnalysis():
+    text = entry1.get()
+    score = runOnSample(text)
+    label1 = tk.Label(root, text=str(score)+" ("+sentimentCalculation(score)+")" )
+    canvas1.create_window(200, 230, window=label1)
 
 
+def getActuallyUsedWords(phrase):
+    out = []
+    for word in phrase:
+        if max(v.transform([word]).toarray()[0]) !=0:
+            out = out+ [word]
+    return out;
 
 import tkinter as tk
 
-class MainWindow(tk.Frame):
-    counter = 0
-    def __init__(self, *args, **kwargs):
-        tk.Frame.__init__(self, *args, **kwargs)
-        self.entry1 = tk.Entry(self)
-        self.entry1.pack(side = "left")
-        self.button = tk.Button(self, text="Get sentiment on topic",
-                                command=self.create_window)
-        self.button.pack(side="right")
-    def create_window(self):
-        topic = self.entry1.get()
-        df = getSentimentOfTopic(topic, 15)
-        self.counter += 1
-        t = tk.Toplevel(self)
-        t.wm_title("Window #%s" % self.counter)
-        t = Table(t,df)
+root= tk.Tk()
 
-root = tk.Tk()
-main = MainWindow(root)
-main.pack(side="top", fill="both", expand=True)
+canvas1 = tk.Canvas(root, width = 400, height = 300,  relief = 'raised')
+canvas1.pack()
+
+label1 = tk.Label(root, text='Sentiment Analysis Using Neural Network')
+label1.config(font=('helvetica', 14))
+canvas1.create_window(200, 25, window=label1)
+
+label2 = tk.Label(root, text='Input text to be evalutated:')
+label2.config(font=('helvetica', 10))
+canvas1.create_window(200, 100, window=label2)
+
+entry1 = tk.Entry (root)
+canvas1.create_window(200, 140, window=entry1)
+
+button1 = tk.Button(text='Predict Sentiment', command=getSemanticsAnalysis, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
+canvas1.create_window(200, 180, window=button1)
+
 root.mainloop()
-#https://datatofish.com/entry-box-tkinter/
